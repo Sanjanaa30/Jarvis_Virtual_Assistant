@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+/* Remove Chrome/Edge default password reveal icon */
+.password-input::-ms-reveal,
+.password-input::-ms-clear {
+  display: none !important;
+}
+
+.password-input::-webkit-textfield-decoration-container {
+  display: none !important;
+}
+
+.password-input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+}
