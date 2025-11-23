@@ -8,35 +8,70 @@ function SignUp() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const togglePasswordVisibility = () => setPasswordVisible((v) => !v);
 
-  const { serverUrl } = useContext(userDataContext);
+  const { serverUrl, userData, setUserData } = useContext(userDataContext);
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // empty string = no error / no success
+  const [err, setErr] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const [loading, setLoading] = useState(false);
+
   const handleSignUp = async (e) => {
     e.preventDefault();
+    // clear previous messages
+    setErr("");
+    setSuccess("");
+    setLoading(true);
 
     try {
-      let result = await axios.post(
+      const result = await axios.post(
         `${serverUrl}/api/auth/signup`,
         { name, email, password },
         { withCredentials: true }
       );
-      console.log(result);
+      setUserData(result.data);
+      setLoading(false);
+      navigate("/customize");
+      // take message from backend if it sends one, otherwise use a default
+      const data = result.data;
+      const message =
+        (data && data.message) ||
+        "Account created successfully. You can now sign in.";
+
+      setSuccess(message);
+
+      // if you want to redirect instead of (or after) showing message:
       // navigate("/signin");
     } catch (error) {
       if (error.response) {
+        console.log(error)
+        setUserData(null);
+        setLoading(false);
         console.error(
           "Sign-up failed:",
           error.response.status,
-          error.response.data // 👈 this usually has { message: "...", ... }
+          error.response.data
         );
+
+        const data = error.response.data;
+        const message =
+          (data && data.message) ||
+          (data && data.error) ||
+          (typeof data === "string" ? data : "") ||
+          "Sign-up failed.";
+
+        setErr(message);
       } else if (error.request) {
         console.error("No response from server:", error.request);
+        setErr("No response from server. Please try again.");
       } else {
         console.error("Error setting up request:", error.message);
+        setErr("Something went wrong. Please try again.");
       }
     }
   };
@@ -139,11 +174,26 @@ function SignUp() {
           </button>
         </div>
 
+        {/* 🔴 Error message */}
+        {err && (
+          <p className="text-red-500 font-bold mt-1 w-full text-center">
+            {err}
+          </p>
+        )}
+
+        {/* 🟢 Success message */}
+        {success && !err && (
+          <p className="text-green-400 font-bold mt-1 w-full text-center">
+            {success}
+          </p>
+        )}
+
         <button
           type="submit"
           className="w-full h-12 md:h-14 text-black rounded-full text-base md:text-lg mt-4 bg-white font-semibold transition-colors hover:bg-gray-100"
+          disabled={loading}
         >
-          Sign Up
+          {loading ? "Signing Up..." : "Sign Up"}
         </button>
 
         <p className="text-white text-sm md:text-base mt-3 text-center">
